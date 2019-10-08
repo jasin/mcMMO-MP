@@ -44,7 +44,7 @@ class SkillManager {
     /** @var bool */
     private $can_use_abilities;
 
-    public static function registerSkill(string $class, bool $override = false) : void{
+    public static function registerSkill(string $class, bool $override = true) : void{
         $skillId = $class::SKILL_ID;
         if($skillId < 0){
             throw new \Error("SkillId cannot be negative, got $skillId");
@@ -56,6 +56,9 @@ class SkillManager {
                 $oldlistener = $oldskill::getListenerClass();
                 if($oldlistener !== null && is_subclass_of($oldskill, SkillListener::class, true)){
                     //TODO: Unregister oldlistener
+
+                    $server = Server::getInstance();
+                    $server->getPluginManager()->unregister($oldlistener);
                 }
 
                 SkillManager::removeSkillIdentifiers($skillId);
