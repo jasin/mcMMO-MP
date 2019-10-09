@@ -1,7 +1,6 @@
 <?php
 namespace muqsit\mcmmo\skills;
 
-use muqsit\mcmmo\Loader;
 use muqsit\mcmmo\skills\mining\MiningSkill;
 use muqsit\mcmmo\skills\acrobatics\AcrobaticsSkill;
 use muqsit\mcmmo\skills\excavation\ExcavationSkill;
@@ -34,6 +33,9 @@ class SkillManager {
 
     /** @var Player */
     private $player;
+    
+    /** @var Server */
+    private $server;
 
     /** @var Plugin */
     private $plugin;
@@ -43,6 +45,14 @@ class SkillManager {
 
     /** @var bool */
     private $can_use_abilities;
+
+    public function __construct(Player $player, array $savedata) {
+        $this->server = Server::getInstance();
+        $this->plugin = $this->server->getPluginManager()->getPlugin("mcMMO");
+        $this->player = $player;
+        $this->setCanUseAbilities($savedata["ability_use"] ?? true);
+        $this->setSkillTree($savedata["skill_tree"] ?? []);
+    }
 
     public static function registerSkill(string $class, bool $override = true) : void{
         $skillId = $class::SKILL_ID;
@@ -57,8 +67,8 @@ class SkillManager {
                 if($oldlistener !== null && is_subclass_of($oldskill, SkillListener::class, true)){
                     //TODO: Unregister oldlistener
 
-                    $server = Server::getInstance();
-                    $server->getPluginManager()->unregister($oldlistener);
+                    //$server = Server::getInstance();
+                    $this->server->getPluginManager()->unregister($oldlistener);
                 }
 
                 SkillManager::removeSkillIdentifiers($skillId);
@@ -72,7 +82,6 @@ class SkillManager {
                 if (!is_subclass_of($listener, SkillListener::class, true)) {
                     throw new \Error("$listener must be an instance of " . SkillListener::class);
                 }
-
                 $server = Server::getInstance();
                 $plugin = $server->getPluginManager()->getPlugin("mcMMO");
                 $server->getPluginManager()->registerEvents(new $listener($plugin), $plugin);
@@ -124,12 +133,6 @@ class SkillManager {
         }
 
         return null;
-    }
-
-    public function __construct(Player $player, array $savedata){
-        $this->player = $player;
-        $this->setCanUseAbilities($savedata["ability_use"] ?? true);
-        $this->setSkillTree($savedata["skill_tree"] ?? []);
     }
 
     public function getPlayer() : Player{
@@ -218,7 +221,7 @@ class SkillManager {
     }
 
     public function scheduleSkillTasks(Skill $skill) : void{
-        $scheduler = Loader::getInstance()->getScheduler();
+        $scheduler = $this->plugin->getScheduler();
         $skillId = $skill->getId();
 
         if(isset($this->taskIds[SkillManager::TASK_ABILITY_DEACTIVATE_NOTIFY][$skillId])){
@@ -251,7 +254,7 @@ class SkillManager {
     }
 
     public function close(Server $server) : void{
-        $scheduler = Loader::getInstance()->getScheduler();
+        $scheduler = $this->plugin->getScheduler();
         foreach($this->taskIds as $taskIds){
             foreach($taskIds as $taskId){
                 $scheduler->cancelTask($taskId);
