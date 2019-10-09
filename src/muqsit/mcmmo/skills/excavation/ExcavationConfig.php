@@ -6,6 +6,8 @@ use pocketmine\block\BlockFactory;
 use pocketmine\item\Item;
 use pocketmine\item\Shovel;
 use pocketmine\Player;
+use pocketmine\utils\Config;
+use pocketmine\Server;
 
 class ExcavationConfig{
 
@@ -17,8 +19,14 @@ class ExcavationConfig{
     /** @var array[] */
     private $values = [];
 
+    /** @var Plugin */
+    private $plugin;
+
     public function __construct(){
         //TODO: Make things config.ymlable
+
+        $server = Server::getInstance();
+        $this->plugin = $server->getPluginManager()->getPlugin("mcMMO");
         $this->setDefaults();
     }
 
@@ -38,9 +46,10 @@ class ExcavationConfig{
         }
     }
 
-    public function addDrops(array $drops, Block ...$blocks) : void{
+    public function addDrops(array $drops, array $blocks) : void{
         $drops = $this->createDropsConfig($drops);
         if($drops !== null){
+            var_dump($blocks);
             foreach($blocks as $block){
                 if(!isset($this->values[$index = BlockFactory::toStaticRuntimeId($block->getId(), $block->getDamage())])){
                     throw new \InvalidArgumentException("Cannot modify block drops of an unconfigured block (" . get_class($block) . ")");
@@ -114,192 +123,46 @@ class ExcavationConfig{
         return $block->getDrops($item);
     }
 
-    private function setDefaults() : void{
-        $this->set(Block::get(Block::GRASS), 40);
-        $this->copy(Block::get(Block::GRASS),
-            Block::get(Block::MYCELIUM), Block::get(Block::DIRT), Block::get(Block::GRAVEL),
-            Block::get(Block::SAND), Block::get(Block::SAND, 1), Block::get(Block::CLAY_BLOCK),
-            Block::get(Block::SOUL_SAND)
-        );
+    private function setDefaults() : void {
 
-        $this->addDrops([
-            [
-                ExcavationConfig::TYPE_SKILLREQ => 25,
-                ExcavationConfig::TYPE_XPREWARD => 80,
-                ExcavationConfig::TYPE_CHANCE => 5,
-                ExcavationConfig::TYPE_DROPS => [Item::get(Item::GLOWSTONE_DUST)]
-            ]
-        ],
-            Block::get(Block::GRASS), Block::get(Block::MYCELIUM), Block::get(Block::DIRT),
-            Block::get(Block::SAND), Block::get(Block::SAND, 1)
-        );
+        // Sets block xp rewards
+        $excavation = new Config($this->plugin->getDataFolder() . "xpreward.yml", Config::YAML);
+        $blocks = $excavation->get("Excavation", []); 
+        foreach($blocks as $key => $block) {
+			$key = strtoupper($key);
+            if($key === "RED_SAND") {
+                $this->set(Block::get(Block::SAND, 1), $block);
+            } else {
+                $id = constant("pocketmine\block\Block::$key");
+                $this->set(Block::get($id), $block);
+            }
+        }
 
-        $this->addDrops([
-            [
-                ExcavationConfig::TYPE_SKILLREQ => 250,
-                ExcavationConfig::TYPE_XPREWARD => 100,
-                ExcavationConfig::TYPE_CHANCE => 1,
-                ExcavationConfig::TYPE_DROPS => [Item::get(Item::EGG)]
-            ]
-        ],
-            Block::get(Block::GRASS)
-        );
-
-        $this->addDrops([
-            [
-                ExcavationConfig::TYPE_SKILLREQ => 250,
-                ExcavationConfig::TYPE_XPREWARD => 3000,
-                ExcavationConfig::TYPE_CHANCE => 0.05,
-                ExcavationConfig::TYPE_DROPS => [Item::get(Item::RECORD_13)]//GOLD MUSIC DISC
+        // Add extra drops
+        $excavation = new Config($this->plugin->getDataFolder() . "drops.yml", Config::YAML);
+        $drops = $excavation->get("Excavation", []);
+        foreach($drops as $drop => $data) {
+            $blocks = [];
+            foreach($data["From"] as $block) {
+				$block = strtoupper($block);
+                if($block === "RED_SAND") {
+                    $blockId = Block::get(Block::SAND, 1);
+                } else {
+                    $blockId = Block::get(constant("pocketmine\block\Block::$block"));
+                }
+                array_push($blocks, $blockId);
+            }
+            var_dump($blocks);
+            $this->addDrops([
+                [
+                    ExcavationConfig::TYPE_SKILLREQ => $data["Level"],
+                    ExcavationConfig::TYPE_XPREWARD => $data["XP"],
+                    ExcavationConfig::TYPE_CHANCE => $data["Chance"],
+                    ExcavationConfig::TYPE_DROPS => [Item::get(constant("pocketmine\item\Item::$drop"))]
+                ]
             ],
-            [
-                ExcavationConfig::TYPE_SKILLREQ => 250,
-                ExcavationConfig::TYPE_XPREWARD => 3000,
-                ExcavationConfig::TYPE_CHANCE => 0.05,
-                ExcavationConfig::TYPE_DROPS => [Item::get(Item::RECORD_FAR)]//GREEN MUSIC DISC
-            ],
-            [
-                ExcavationConfig::TYPE_SKILLREQ => 350,
-                ExcavationConfig::TYPE_XPREWARD => 1000,
-                ExcavationConfig::TYPE_CHANCE => 0.13,
-                ExcavationConfig::TYPE_DROPS => [Item::get(Item::DIAMOND)]
-            ],
-            [
-                ExcavationConfig::TYPE_SKILLREQ => 750,
-                ExcavationConfig::TYPE_XPREWARD => 3000,
-                ExcavationConfig::TYPE_CHANCE => 0.5,
-                ExcavationConfig::TYPE_DROPS => [Item::get(Item::CAKE)]
-            ]
-        ],
-            Block::get(Block::GRASS), Block::get(Block::DIRT), Block::get(Block::GRAVEL),
-            Block::get(Block::SAND), Block::get(Block::SAND, 1), Block::get(Block::CLAY_BLOCK)
-        );
-
-        $this->addDrops([
-            [
-                ExcavationConfig::TYPE_SKILLREQ => 250,
-                ExcavationConfig::TYPE_XPREWARD => 100,
-                ExcavationConfig::TYPE_CHANCE => 0.1,
-                ExcavationConfig::TYPE_DROPS => [Item::get(Item::APPLE)]
-            ]
-        ],
-            Block::get(Block::GRASS), Block::get(Block::MYCELIUM)
-        );
-
-        $this->addDrops([
-            [
-                ExcavationConfig::TYPE_SKILLREQ => 250,
-                ExcavationConfig::TYPE_XPREWARD => 3000,
-                ExcavationConfig::TYPE_CHANCE => 0.05,
-                ExcavationConfig::TYPE_DROPS => [Item::get(Item::NAMETAG)]
-            ]
-        ],
-            Block::get(Block::DIRT), Block::get(Block::GRASS), Block::get(Block::SAND),
-            Block::get(Block::SAND, 1), Block::get(Block::GRAVEL), Block::get(Block::CLAY_BLOCK),
-            Block::get(Block::MYCELIUM), Block::get(Block::SOUL_SAND)
-        );
-
-        $this->addDrops([
-            [
-                ExcavationConfig::TYPE_SKILLREQ => 350,
-                ExcavationConfig::TYPE_XPREWARD => 80,
-                ExcavationConfig::TYPE_CHANCE => 1.33,
-                ExcavationConfig::TYPE_DROPS => [Item::get(Item::DYE, 3)]//COCOA BEANS
-            ]
-        ],
-            Block::get(Block::GRASS), Block::get(Block::MYCELIUM), Block::get(Block::DIRT)
-        );
-
-        $this->addDrops([
-            [
-                ExcavationConfig::TYPE_SKILLREQ => 500,
-                ExcavationConfig::TYPE_XPREWARD => 80,
-                ExcavationConfig::TYPE_CHANCE => 0.5,
-                ExcavationConfig::TYPE_DROPS => [Item::get(Item::RED_MUSHROOM)]
-            ],
-            [
-                ExcavationConfig::TYPE_SKILLREQ => 500,
-                ExcavationConfig::TYPE_XPREWARD => 80,
-                ExcavationConfig::TYPE_CHANCE => 0.5,
-                ExcavationConfig::TYPE_DROPS => [Item::get(Item::BROWN_MUSHROOM)]
-            ]
-        ],
-            Block::get(Block::GRASS), Block::get(Block::DIRT), Block::get(Block::MYCELIUM)
-        );
-
-        $this->addDrops([
-            [
-                ExcavationConfig::TYPE_SKILLREQ => 75,
-                ExcavationConfig::TYPE_XPREWARD => 30,
-                ExcavationConfig::TYPE_CHANCE => 10,
-                ExcavationConfig::TYPE_DROPS => [Item::get(Item::GUNPOWDER)]
-            ],
-            [
-                ExcavationConfig::TYPE_SKILLREQ => 175,
-                ExcavationConfig::TYPE_XPREWARD => 30,
-                ExcavationConfig::TYPE_CHANCE => 10,
-                ExcavationConfig::TYPE_DROPS => [Item::get(Item::BONE)]
-            ],
-            [
-                ExcavationConfig::TYPE_SKILLREQ => 850,
-                ExcavationConfig::TYPE_XPREWARD => 30,
-                ExcavationConfig::TYPE_CHANCE => 0.5,
-                ExcavationConfig::TYPE_DROPS => [Item::get(Item::NETHERRACK)]
-            ]
-        ],
-            Block::get(Block::GRAVEL)
-        );
-
-        $this->addDrops([
-            [
-                ExcavationConfig::TYPE_SKILLREQ => 150,
-                ExcavationConfig::TYPE_XPREWARD => 10,
-                ExcavationConfig::TYPE_CHANCE => 1,
-                ExcavationConfig::TYPE_DROPS => [Item::get(Item::SLIMEBALL)]
-            ],
-            [
-                ExcavationConfig::TYPE_SKILLREQ => 250,
-                ExcavationConfig::TYPE_XPREWARD => 200,
-                ExcavationConfig::TYPE_CHANCE => 5,
-                ExcavationConfig::TYPE_DROPS => [Item::get(Item::STRING)]
-            ],
-            [
-                ExcavationConfig::TYPE_SKILLREQ => 500,
-                ExcavationConfig::TYPE_XPREWARD => 100,
-                ExcavationConfig::TYPE_CHANCE => 0.1,
-                ExcavationConfig::TYPE_DROPS => [Item::get(Item::BUCKET)]
-            ],
-            [
-                ExcavationConfig::TYPE_SKILLREQ => 500,
-                ExcavationConfig::TYPE_XPREWARD => 100,
-                ExcavationConfig::TYPE_CHANCE => 0.1,
-                ExcavationConfig::TYPE_DROPS => [Item::get(Item::CLOCK)]
-            ]
-        ],
-            Block::get(Block::CLAY_BLOCK)
-        );
-
-        $this->addDrops([
-            [
-                ExcavationConfig::TYPE_SKILLREQ => 650,
-                ExcavationConfig::TYPE_XPREWARD => 80,
-                ExcavationConfig::TYPE_CHANCE => 0.5,
-                ExcavationConfig::TYPE_DROPS => [Item::get(Item::SOUL_SAND)]
-            ]
-        ],
-            Block::get(Block::SAND)
-        );
-
-        $this->addDrops([
-            [
-                ExcavationConfig::TYPE_SKILLREQ => 850,
-                ExcavationConfig::TYPE_XPREWARD => 100,
-                ExcavationConfig::TYPE_CHANCE => 0.5,
-                ExcavationConfig::TYPE_DROPS => [Item::get(Item::QUARTZ)]
-            ]
-        ],
-            Block::get(Block::DIRT), Block::get(Block::SAND), Block::get(Block::SAND, 1),
-            Block::get(Block::GRAVEL), Block::get(Block::MYCELIUM), Block::get(Block::SOUL_SAND)
-        );
+                $blocks
+            );
+        }
     }
 }
