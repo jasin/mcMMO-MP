@@ -1,0 +1,19 @@
+---
+# mcMMO drops file
+
+# Extra drops from skill levels when breaking blocks
+
+Excavation:
+  CAKE:
+    Amount: 1
+    XP: 3000
+    Chance: 0.05
+    Level : 75
+    From: [Dirt, Podzol, Grass, Sand, Red_Sand, Gravel, Clay_Block, Mycelium, Soul_Sand]
+  GUNPOWDER:
+    Amount: 1
+    XP: 30
+    Chance: 10.0
+    Level: 10
+    From: [Gravel]
+...

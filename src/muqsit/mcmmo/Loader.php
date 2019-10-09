@@ -23,6 +23,8 @@ class Loader extends PluginBase{
         self::$instance = $this;
     
         $this->saveResource("database.yml");
+        $this->saveResource("xpreward.yml");
+        $this->saveResource("drops.yml");
         $this->saveResource("help.ini");
 
         McMMOCommand::registerDefaults($this);
