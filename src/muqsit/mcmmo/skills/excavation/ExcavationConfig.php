@@ -15,22 +15,26 @@ class ExcavationConfig{
     const TYPE_SKILLREQ = 1;
     const TYPE_CHANCE = 2;
     const TYPE_DROPS = 3;
-
+	
     /** @var array[] */
     private $values = [];
 
     /** @var Plugin */
     private $plugin;
 
-    public function __construct(){
-        //TODO: Make things config.ymlable
+    /** @var array */
+    private $metablocks = [
+        "Sand" => [0, 1]
+    ];
+
+    public function __construct() {
 
         $server = Server::getInstance();
         $this->plugin = $server->getPluginManager()->getPlugin("mcMMO");
         $this->setDefaults();
     }
 
-    public function set(Block $block, int $xpreward = 0, int $skillreq = 0, ?array $drops = null) : void{
+    public function set(Block $block, int $xpreward = 0, int $skillreq = 0, ?array $drops = null) : void {
         $this->values[BlockFactory::toStaticRuntimeId($block->getId(), $block->getDamage())] = [
             ExcavationConfig::TYPE_XPREWARD => $xpreward,
             ExcavationConfig::TYPE_SKILLREQ => $skillreq,
@@ -38,18 +42,9 @@ class ExcavationConfig{
         ];
     }
 
-    public function copy(Block $block, Block ...$blocks) : void{
-        $copy_index = BlockFactory::toStaticRuntimeId($block->getId(), $block->getDamage());
-        foreach($blocks as $block){
-            $block_index = BlockFactory::toStaticRuntimeId($block->getId(), $block->getDamage());
-            $this->values[$block_index] = $this->values[$copy_index];
-        }
-    }
-
     public function addDrops(array $drops, array $blocks) : void{
         $drops = $this->createDropsConfig($drops);
         if($drops !== null){
-            var_dump($blocks);
             foreach($blocks as $block){
                 if(!isset($this->values[$index = BlockFactory::toStaticRuntimeId($block->getId(), $block->getDamage())])){
                     throw new \InvalidArgumentException("Cannot modify block drops of an unconfigured block (" . get_class($block) . ")");
@@ -125,16 +120,20 @@ class ExcavationConfig{
 
     private function setDefaults() : void {
 
+        /** 
+         * Because of the way Bedrock handles blocks like Red_Sand as Block Sand
+         * with a meta data value > 0. As a result XP and extra drops will be linked.
+         * Best solution to keep code clean and concise. Advice???
+         */
+
         // Sets block xp rewards
         $excavation = new Config($this->plugin->getDataFolder() . "xpreward.yml", Config::YAML);
         $blocks = $excavation->get("Excavation", []); 
         foreach($blocks as $key => $block) {
-			$key = strtoupper($key);
-            if($key === "RED_SAND") {
-                $this->set(Block::get(Block::SAND, 1), $block);
-            } else {
-                $id = constant("pocketmine\block\Block::$key");
-                $this->set(Block::get($id), $block);
+            $states = $this->metablocks[$key] ?? array(0);
+            foreach($states as $state) {
+                $id = constant("pocketmine\block\Block::" . strtoupper($key));
+                $this->set(Block::get($id, $state), $block);
             }
         }
 
@@ -144,15 +143,12 @@ class ExcavationConfig{
         foreach($drops as $drop => $data) {
             $blocks = [];
             foreach($data["From"] as $block) {
-				$block = strtoupper($block);
-                if($block === "RED_SAND") {
-                    $blockId = Block::get(Block::SAND, 1);
-                } else {
-                    $blockId = Block::get(constant("pocketmine\block\Block::$block"));
+                $states = $this->metablocks[$key] ?? array(0);
+                foreach($states as $state) {
+                    $blockId = Block::get(constant("pocketmine\block\Block::" . strtoupper($block)), $state);
+                    array_push($blocks, $blockId);
                 }
-                array_push($blocks, $blockId);
             }
-            var_dump($blocks);
             $this->addDrops([
                 [
                     ExcavationConfig::TYPE_SKILLREQ => $data["Level"],

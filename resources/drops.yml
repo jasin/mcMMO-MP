@@ -9,11 +9,113 @@ Excavation:
     XP: 3000
     Chance: 0.05
     Level : 75
-    From: [Dirt, Podzol, Grass, Sand, Red_Sand, Gravel, Clay_Block, Mycelium, Soul_Sand]
+    From: [Dirt, Podzol, Grass, Sand, Gravel, Clay_Block, Mycelium, Soul_Sand]
   GUNPOWDER:
     Amount: 1
     XP: 30
     Chance: 10.0
     Level: 10
     From: [Gravel]
+  BONE:
+    Amount: 1
+    XP: 30
+    Chance: 10.0
+    Level: 20
+    From: [Gravel]
+  APPLE:
+    Amount: 1
+    XP: 100
+    Chance: 0.1
+    Level: 25
+    From: [Grass, Mycelium]
+  SLIME_BALL:
+    Amount: 1
+    XP: 100
+    Chance: 5.0
+    Level: 15
+    From: [Clay_Block]
+  BUCKET:
+    Amount: 1
+    XP: 100
+    Chance: 0.1
+    Level: 50
+    From: [Clay_Block]
+  NETHERRACK:
+    Amount: 1
+    XP: 30
+    Chance: 0.5
+    Level: 85
+    From: [Gravel]
+  RED_MUSHROOM:
+    Amount: 1
+    XP: 80
+    Chance: 0.5
+    Level: 50
+    From: [Dirt, Podzol, Grass, Mycelium]
+  BROWN_MUSHROOM:
+    Amount: 1
+    XP: 80
+    Chance: 0.5
+    Level: 50
+    From: [Dirt, Podzol, Grass, Mycelium]
+  EGG:
+    Amount: 1
+    XP: 100
+    Chance: 1.0
+    Level: 25
+    From: [Grass]
+  SOUL_SAND:
+    Amount: 1
+    XP: 80
+    Chance: 0.5
+    Level: 65
+    From: [Sand]
+  CLOCK:
+    Amount: 1
+    XP: 100
+    Chance: 0.1
+    Level: 50
+    From: [Clay_Block]
+  COBWEB:
+    Amount: 1
+    XP: 150
+    Chance: 5.0
+    Level: 75
+    From: [Clay_Block]
+  STRING:
+    Amount: 1
+    XP: 200
+    Chance: 5.0
+    Level: 25
+    From: [Clay_Block]
+  GLOWSTONE_DUST:
+    Amount: 1
+    XP: 80
+    Chance: 5.0
+    Level: 5
+    From: [Dirt, Podzol, Grass, Sand, Mycelium]
+  DIAMOND:
+    Amount: 1
+    XP: 1000
+    Chance: 0.13
+    Level: 35
+    From: [Dirt, Podzol, Grass, Sand, Gravel, Clay_Block, Mycelium, Soul_Sand]
+  COCOA:
+    Amount: 1
+    XP: 100
+    Chance: 1.33
+    Level: 35
+    From: [Dirt, Podzol, Grass, Mycelium]
+  QUARTZ:
+    Amount: 1
+    XP: 100
+    Chance: 0.5
+    Level: 85
+    From: [Dirt, Podzol, Grass, Sand, Gravel, Mycelium, Soul_Sand]
+  NAME_TAG:
+    Amount: 1
+    XP: 3000
+    Chance: 0.05
+    Level: 25
+    From: [Dirt, Podzol, Grass, Sand, Gravel, Clay_Block, Mycelium, Soul_Sand]
 ...
