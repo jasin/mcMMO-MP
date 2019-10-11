@@ -12,35 +12,42 @@ use pocketmine\item\Item;
 use pocketmine\level\Level;
 use pocketmine\math\Vector3;
 use pocketmine\Player;
+use pocketmine\Server;
+use pocketmine\utils\Config;
 
 class WoodcuttingConfig{
 
     const MINIMUM_LEAFBLOWER_LEVEL = 100;
+    const MAX_LEVEL = 1000;
 
     const TREE_FELLER_DIRECTIONS = [
-        [1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1], [0, 1, 0]
+        [2, 0, -2], [2, 0, -1], [2, 0, 0], [2, 0, 1], [2, 0, 2],
+        [1, 0, -2], [1, 0, -1], [1, 0, 0], [1, 0, 1], [1, 0, 2],
+        [0, 0, -2], [0, 0, -1],            [0, 0, 1], [0, 0, 2],
+        [-1, 0, -2], [-1, 0, -1], [-1, 0, 0], [-1, 0, 1], [-1, 0, 2],
+        [-2, 0, -2], [-2, 0, -1], [-2, 0, 0], [-2, 0, 1], [-2, 0, 2]
     ];
 
     /** @var int[] */
     private $values = [];
 
-    public function __construct(){
+    /** @var Plugin */
+    private $plugin;
+
+    /** @var array */
+    private $metablocks = [
+        "Log" => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        "Log2" => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        "Wood" => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        "Red_Mushroom_Block" => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        "Brown_Mushroom_Block" => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    ];
+
+    public function __construct() {
+
+        $server = Server::getInstance();
+        $this->plugin = $server->getPluginManager()->getPlugin("mcMMO");
         $this->setDefaults();
-    }
-
-    private function setDefaults() : void{
-        $this->set(Block::get(Block::WOOD, Wood::BIRCH), 90);
-        $this->set(Block::get(Block::WOOD, Wood::OAK), 70);
-        $this->set(Block::get(Block::WOOD, Wood::JUNGLE), 100);
-        $this->set(Block::get(Block::WOOD, Wood::SPRUCE), 80);
-
-        $this->set(Block::get(Block::WOOD2, Wood2::ACACIA), 90);
-        $this->set(Block::get(Block::WOOD2, Wood2::DARK_OAK), 90);
-
-        $this->set(Block::get(Block::BROWN_MUSHROOM_BLOCK, 10), 70);
-        $this->set(Block::get(Block::BROWN_MUSHROOM_BLOCK, 15), 70);
-        $this->set(Block::get(Block::RED_MUSHROOM_BLOCK, 10), 70);
-        $this->set(Block::get(Block::RED_MUSHROOM_BLOCK, 15), 70);
     }
 
     public function set(Block $block, int $xpreward) : void{
@@ -55,71 +62,79 @@ class WoodcuttingConfig{
         return $block instanceof Leaves || $block instanceof Leaves2;
     }
 
-    private function treeFellerSearch(Vector3 $pos, Level $level, int $logId, int $leafId = -1) : \Generator{
-        foreach(self::TREE_FELLER_DIRECTIONS as [$xOffset, $yOffset, $zOffset]){
-            $blockId = $level->getBlockIdAt($pos->x + $xOffset, $pos->y + $yOffset, $pos->z + $zOffset);
-            if($blockId === $logId){
-                $pos->x += $xOffset;
-                $pos->y += $yOffset;
-                $pos->z += $zOffset;
-                foreach($this->treeFellerSearch($pos->asVector3(), $level, $leafId) as $leaf_pos){
-                    $level->setBlockIdAt($leaf_pos->x, $leaf_pos->y, $leaf_pos->z, Block::AIR);
-                    $level->setBlockDataAt($leaf_pos->x, $leaf_pos->y, $leaf_pos->z, 0);
-                }
-                yield from $this->treeFellerSearch($pos, $level, $logId, $leafId);
-            }elseif($blockId === $leafId){
-                $level->setBlockIdAt($pos->x, $pos->y, $pos->z, Block::AIR);
-                $level->setBlockDataAt($pos->x, $pos->y, $pos->z, 0);
-            }else{
-                yield $pos;
-            }
-        }
+    private function clearBlock(Level $level, Vector3 $pos) : void {
+        $level->setBlockIdAt($pos->x, $pos->y, $pos->z, Block::AIR);
+        $level->setBlockDataAt($pos->x, $pos->y, $pos->z, 0);
     }
 
-    public function getDrops(Player $player, Item $item, Block $block, int $skill_level, bool $has_ability, &$xpreward = null) : array{
+    private function treeFellerSearch(Vector3 $pos, Level $level, int $logId, int $leafId) : \Generator {
+        $future_pos = $pos->add(0, 1, 0);
+        $futureBlockId = $level->getBlockIdAt($future_pos->x, $future_pos->y, $future_pos->z);
+        if($futureBlockId === $leafId || $futureBlockId === $logId) {
+            yield from $this->treeFellerSearch2($future_pos, $level, $logId, $leafId);
+        }
+        foreach(self::TREE_FELLER_DIRECTIONS as [$xOffset, $yOffset, $zOffset]) {
+            $new_pos = $pos->add($xOffset, $yOffset, $zOffset);
+            $blockId = $level->getBlockIdAt($new_pos->x, $new_pos->y, $new_pos->z);
+            $this->clearBlock($level, $new_pos);
+        }
+        yield $pos;
+    }
+
+    public function getDrops(Player $player, Item $item, Block $block, int $skill_level, bool $has_ability, &$xpreward = null) : array {
         $xpreward = 0;
         $drops = $block->getDrops($item);
 
-        if($this->isRightTool($item)){
-            if(isset($this->values[$index = BlockFactory::toStaticRuntimeId($block->getId(), $block->getDamage())])){
-                $xpreward = $this->values[$index];
-                $multiplier = ($skill_level > 999 || mt_rand(1, 1000) <= $skill_level) ? 2 : 1;
+        if($this->isRightTool($item) && isset($this->values[$index = BlockFactory::toStaticRuntimeId($block->getId(), $block->getDamage())])) {
+            $xpreward = $this->values[$index];
+            $multiplier = ($skill_level >= self::MAX_LEVEL || mt_rand(1, self::MAX_LEVEL) <= $skill_level) ? 2 : 1;
 
-                if($has_ability){
-                    $level = $player->getLevel();
-                    $i = 0;
-                    foreach($this->treeFellerSearch($block->asVector3(), $level, $block->getId(), $block instanceof Wood ? Block::LEAVES : Block::LEAVES2) as $pos){
-                        $level->setBlockIdAt($pos->x, $pos->y, $pos->z, Block::AIR);
-                        $level->setBlockDataAt($pos->x, $pos->y, $pos->z, 0);
-                        ++$i;
-                    }
-
-                    $multiplier += $i;
-                    $xpreward *= $i;
+            if($has_ability) {
+                $i = 0;
+                $level = $player->getLevel();
+                foreach($this->treeFellerSearch($block->asVector3(), $level, $block->getId(), $block instanceof Wood ? Block::LEAVES : Block::LEAVES2) as $pos) {
+                    $this->clearBlock($level, $pos);
+                    ++$i;
                 }
 
-                if($multiplier > 1){
-                    foreach($drops as $drop){
-                        $drop->setCount($drop->getCount() * $multiplier);
-                    }
-                }
-            }elseif(mt_rand(1, 20) === 1 && $this->isLeaf($block) && $skill_level >= WoodcuttingConfig::MINIMUM_LEAFBLOWER_LEVEL){
-                $sapling = $block->getSaplingItem();
-                $drops_sapling = false;
+                $multiplier += $i;
+                $xpreward *= $i;
+            }
 
-                foreach($drops as $drop){
-                    if($drop->equals($sapling, false, false)){
-                        $drops_sapling = true;
-                        break;
-                    }
+            if($multiplier > 1) {
+                foreach($drops as $drop) {
+                    $drop->setCount($drop->getCount() * $multiplier);
                 }
+            }
 
-                if(!$drops_sapling){
-                    $drops[] = $sapling;
+        } elseif(mt_rand(1, 20) === 1 && $this->isLeaf($block) && $skill_level >= WoodcuttingConfig::MINIMUM_LEAFBLOWER_LEVEL) {
+            $sapling = $block->getSaplingItem();
+            $drops_sapling = false;
+
+            foreach($drops as $drop) {
+                if($drop->equals($sapling, false, false)) {
+                    $drops_sapling = true;
+                    break;
                 }
+            }
+
+            if(!$drops_sapling) {
+                $drops[] = $sapling;
             }
         }
 
         return $drops;
+    }
+
+    private function setDefaults() : void {
+        $woodcutting = new Config($this->plugin->getDataFolder() . "xpreward.yml", Config::YAML);
+        $blocks = $woodcutting->get("Woodcutting", []); 
+        foreach($blocks as $key => $block) {
+            $states = $this->metablocks[$key] ?? array(0);
+            foreach($states as $state) {
+                $id = constant("pocketmine\block\Block::" . strtoupper($key));
+                $this->set(Block::get($id, $state), $block);
+            }
+        }
     }
 }

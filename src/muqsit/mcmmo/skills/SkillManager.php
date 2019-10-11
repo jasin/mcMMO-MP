@@ -32,7 +32,7 @@ class SkillManager {
     private $skill_tree = [];
 
     /** @var Player */
-    private $player;
+    protected $player;
     
     /** @var Server */
     private $server;

@@ -96,6 +96,12 @@ class ExcavationConfig{
                 $xpreward = $values[ExcavationConfig::TYPE_XPREWARD] * $multiplier;
             }
 
+            if($has_ability) {
+                $player->getLevel();
+                $level->setBlockIdAt($block->getX(), $block->getY(), $block->getZ(), Block::AIR);
+                $level->setBlockDataAt($block->getX(), $block->getY(), $block->getZ(), 0);
+            }
+
             if(isset($values[ExcavationConfig::TYPE_DROPS])){
                 foreach($values[ExcavationConfig::TYPE_DROPS] as $skillreq => $drops){
                     if($skill_level >= $skillreq){
