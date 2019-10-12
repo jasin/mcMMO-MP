@@ -25,11 +25,20 @@ class WoodcuttingListener extends SkillListener{
     public function onPlayerInteract(PlayerInteractEvent $event) : void{
         $block = $event->getBlock();
         $item = $event->getItem();
+        $player = $event->getPlayer();
+        $skill = $this->plugin->getSkillManager($player)->getSkill(self::WOODCUTTING);
 
-        if($this->config->isLeaf($block) && $this->config->isRightTool($item)){
-            $player = $event->getPlayer();
-            $level = $this->plugin->getSkillManager($player)->getSkill(self::WOODCUTTING)->getLevel();
-            if($level >= WoodcuttingConfig::MINIMUM_LEAFBLOWER_LEVEL){
+        if($this->config->isRightTool($item)) {
+            if($this->config->isLeaf($block)) {
+                $skill_level = $this->plugin->getSkillManager($player)->getSkill(self::WOODCUTTING)->getLevel();
+                if($skill_level >= WoodcuttingConfig::MINIMUM_LEAFBLOWER_LEVEL){
+                    $level = $block->getLevel();
+                    $level->useBreakOn($block, $item, $player);
+                    $level->addSound(new PopSound($block));
+                }
+            }
+
+            if($this->config->isLog($block) && $skill->hasAbility()) {
                 $level = $block->getLevel();
                 $level->useBreakOn($block, $item, $player);
                 $level->addSound(new PopSound($block));
@@ -44,12 +53,13 @@ class WoodcuttingListener extends SkillListener{
      */
     public function onBlockBreak(BlockBreakEvent $event) : void{
         $player = $event->getPlayer();
-        $manager = $this->plugin->getSkillManager($player);
-        $skill = $manager->getSkill(self::WOODCUTTING);
-        $event->setDrops($this->config->getDrops($player, $event->getItem(), $event->getBlock(), $skill->getLevel(), $skill->hasAbility(), $xpreward));
+        $skill = $this->plugin->getSkillManager($player)->getSkill(self::WOODCUTTING);
+        $drops = $this->config->getDrops($player, $event->getItem(), $event->getBlock(), $skill->getLevel(), $skill->hasAbility(), $xpreward);
+        var_dump($drops);
+        $event->setDrops($drops);
 
         if($xpreward > 0){
-            $manager->addSkillXp(self::WOODCUTTING, $xpreward);
+            $this->plugin->getSkillManager($player)->addSkillXp(self::WOODCUTTING, $xpreward);
         }
     }
 }

@@ -58,6 +58,11 @@ class WoodcuttingConfig{
         return $item instanceof Axe;
     }
 
+    public function isLog(Block $block) : bool {
+        $blockId = $block->getId();
+        return ($block instanceof Wood && $blockId === Block::LOG) || ($block instanceof Wood2 && $blockId === Block::LOG2);
+    }
+
     public function isLeaf(Block $block) : bool{
         return $block instanceof Leaves || $block instanceof Leaves2;
     }
@@ -67,23 +72,28 @@ class WoodcuttingConfig{
         $level->setBlockDataAt($pos->x, $pos->y, $pos->z, 0);
     }
 
-    private function treeFellerSearch(Vector3 $pos, Level $level, int $logId, int $leafId) : \Generator {
+    private function treeFellerSearch(Vector3 $pos, Level $level, int $logId, int $leafId, int &$i) : \Generator {
         $future_pos = $pos->add(0, 1, 0);
         $futureBlockId = $level->getBlockIdAt($future_pos->x, $future_pos->y, $future_pos->z);
         if($futureBlockId === $leafId || $futureBlockId === $logId) {
-            yield from $this->treeFellerSearch2($future_pos, $level, $logId, $leafId);
+            yield from $this->treeFellerSearch($future_pos, $level, $logId, $leafId, $i);
         }
         foreach(self::TREE_FELLER_DIRECTIONS as [$xOffset, $yOffset, $zOffset]) {
             $new_pos = $pos->add($xOffset, $yOffset, $zOffset);
             $blockId = $level->getBlockIdAt($new_pos->x, $new_pos->y, $new_pos->z);
-            $this->clearBlock($level, $new_pos);
+            if($blockId === $logId || $blockId === $leafId) {
+                $this->clearBlock($level, $new_pos);
+                if($blockId === $logId) { $i++; }
+            }
         }
+        var_dump($i);
         yield $pos;
     }
 
     public function getDrops(Player $player, Item $item, Block $block, int $skill_level, bool $has_ability, &$xpreward = null) : array {
         $xpreward = 0;
         $drops = $block->getDrops($item);
+        $logId = $block->getId();
 
         if($this->isRightTool($item) && isset($this->values[$index = BlockFactory::toStaticRuntimeId($block->getId(), $block->getDamage())])) {
             $xpreward = $this->values[$index];
@@ -92,19 +102,20 @@ class WoodcuttingConfig{
             if($has_ability) {
                 $i = 0;
                 $level = $player->getLevel();
-                foreach($this->treeFellerSearch($block->asVector3(), $level, $block->getId(), $block instanceof Wood ? Block::LEAVES : Block::LEAVES2) as $pos) {
+
+                // Recursively find the top of tree and clear the blocks top to bottom
+                foreach($this->treeFellerSearch($block->asVector3(), $level, $block->getId(), $block instanceof Wood ? Block::LEAVES : Block::LEAVES2, $i) as $pos) {
+                    $blockId = $level->getBlockIdAt($pos->x, $pos->y, $pos->z);
+                    if($blockId === $logId) { $i++; }
                     $this->clearBlock($level, $pos);
-                    ++$i;
                 }
 
                 $multiplier += $i;
                 $xpreward *= $i;
             }
 
-            if($multiplier > 1) {
-                foreach($drops as $drop) {
-                    $drop->setCount($drop->getCount() * $multiplier);
-                }
+            foreach($drops as $drop) {
+                $drop->setCount($multiplier); 
             }
 
         } elseif(mt_rand(1, 20) === 1 && $this->isLeaf($block) && $skill_level >= WoodcuttingConfig::MINIMUM_LEAFBLOWER_LEVEL) {
