@@ -99,11 +99,13 @@ class ExcavationConfig{
             $values = $this->values[$index];
             $xpreward = $values[ExcavationConfig::TYPE_XP] * $multiplier;
             if(isset($values[ExcavationConfig::TYPE_DROPS])) {
-                foreach($values[ExcavationConfig::TYPE_DROPS] as $drops) {
-                    if($skill_level >= $drops[ExcavationConfig::TYPE_SKILLREQ]) {
-                        $chance = $drops[ExcavationConfig::TYPE_CHANCE];
-                        $drop_xp = $drops[ExcavationConfig::TYPE_XPREWARD];
-                        $drop = $drops[ExcavationConfig::TYPE_DROPS];
+                foreach($values[ExcavationConfig::TYPE_DROPS] as [
+                    ExcavationConfig::TYPE_SKILLREQ => $skillreq,
+                    ExcavationConfig::TYPE_CHANCE => $chance,
+                    ExcavationConfig::TYPE_XPREWARD => $drop_xp,
+                    ExcavationConfig::TYPE_DROPS => $drop
+                ]) {
+                    if($skill_level >= $skillreq) {
                         $chance *= $multiplier;
                         if(mt_rand(1, 100) <= $chance) {
                             $drop_xp *= $multiplier;
