@@ -21,12 +21,16 @@ class MiningListener extends SkillListener {
      * @ignoreCancelled true
      */
     public function onBlockBreak(BlockBreakEvent $event) : void {
+        $block = $event->getBlock();
         $player = $event->getPlayer();
         $manager = $this->plugin->getSkillManager($player);
         $skill = $manager->getSkill(self::MINING);
-        $event->setDrops($this->config->getDrops($player, $event->getItem(), $event->getBlock(), $skill->getLevel(), $skill->hasAbility(), $xpreward));
+        $drops = $this->config->getDrops($player, $event->getItem(), $event->getBlock(), $skill->getLevel(), $skill->hasAbility(), $xpreward);
+        if(!empty($drops)) {
+            $event->setDrops($drops);
+        }
 
-        if($xpreward > 0) {
+        if(!is_null($xpreward) && $xpreward > 0) {
             $manager->addSkillXp(self::MINING, $xpreward);
         }
     }

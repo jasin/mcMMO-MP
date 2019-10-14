@@ -52,8 +52,4 @@ class Loader extends PluginBase{
     public function getSkillManager(Player $player) : SkillManager{
         return $this->database->getLoaded($player);
     }
-
-    public static function getInstance() : Loader {
-        return self::$instance;
-    }
 }

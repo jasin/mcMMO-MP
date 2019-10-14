@@ -1,4 +1,10 @@
 ---
+Woodcutting:
+  Log: 70
+  Log2: 80
+  Wood: 70
+  Red_Mushroom_Block: 70
+  Brown_Mushroom_Block: 70
 Excavation:
   Clay_Block: 40
   Grass: 40
@@ -6,7 +12,6 @@ Excavation:
   Podzol: 40
   Gravel: 40
   Mycelium: 40
-  Red_Sand: 40
   Sand: 40
   Snow_Layer: 20
   Snow_Block: 40
