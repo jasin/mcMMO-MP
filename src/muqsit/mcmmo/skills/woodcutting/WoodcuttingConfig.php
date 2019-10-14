@@ -86,7 +86,6 @@ class WoodcuttingConfig{
                 if($blockId === $logId) { $i++; }
             }
         }
-        var_dump($i);
         yield $pos;
     }
 
@@ -109,8 +108,7 @@ class WoodcuttingConfig{
                     if($blockId === $logId) { $i++; }
                     $this->clearBlock($level, $pos);
                 }
-
-                $multiplier += $i;
+                $multiplier *= $i;
                 $xpreward *= $i;
             }
 

@@ -106,7 +106,7 @@ class MiningConfig {
                 }
             }
         }
-        return $block->getDrops($item);
+        return [];
     }
 
     private function setDefaults() : void {

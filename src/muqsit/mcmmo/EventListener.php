@@ -43,7 +43,6 @@ class EventListener implements Listener{
         $action = $event->getAction();
         if($action === PlayerInteractEvent::RIGHT_CLICK_BLOCK) {
             $block = $event->getBlock();
-            $this->plugin->getServer()->getLogger()->info("BLOCK " . $block->getName());
             if(!in_array($block->getId(), $this->blocks)) {
                 $item = $event->getItem();
                 if($item instanceof Tool){

@@ -22,7 +22,7 @@ class WoodcuttingListener extends SkillListener{
      * @priority HIGH
      * @ignoreCancelled true
      */
-    public function onPlayerInteract(PlayerInteractEvent $event) : void{
+    public function onPlayerInteract(PlayerInteractEvent $event) : void {
         $block = $event->getBlock();
         $item = $event->getItem();
         $player = $event->getPlayer();
@@ -51,14 +51,15 @@ class WoodcuttingListener extends SkillListener{
      * @priority HIGH
      * @ignoreCancelled true
      */
-    public function onBlockBreak(BlockBreakEvent $event) : void{
+    public function onBlockBreak(BlockBreakEvent $event) : void {
         $player = $event->getPlayer();
         $skill = $this->plugin->getSkillManager($player)->getSkill(self::WOODCUTTING);
         $drops = $this->config->getDrops($player, $event->getItem(), $event->getBlock(), $skill->getLevel(), $skill->hasAbility(), $xpreward);
-        var_dump($drops);
-        $event->setDrops($drops);
+        if(!empty($drops)) {
+            $event->setDrops($drops);
+        }
 
-        if($xpreward > 0){
+        if(!is_null($xpreward) && $xpreward > 0) {
             $this->plugin->getSkillManager($player)->addSkillXp(self::WOODCUTTING, $xpreward);
         }
     }
