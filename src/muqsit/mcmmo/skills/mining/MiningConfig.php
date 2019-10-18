@@ -6,115 +6,79 @@ use pocketmine\block\BlockFactory;
 use pocketmine\item\Item;
 use pocketmine\item\Pickaxe;
 use pocketmine\Player;
+use pocketmine\Server;
+use pocketmine\utils\Config;
 
 class MiningConfig {
 
-    const TYPE_XPREWARD = 0;
-    const TYPE_SKILLREQ = 1;
-    const TYPE_CHANCE = 2;
-    const TYPE_DROPS = 3;
+    const MOD = 0.01;
 
+    /** @var Plugin */
+    private $plugin;
+
+    /** @var array */
     private $values = [];
 
+    /** @var array */
+    private $metaBlocks = [
+        "Prismarine" => [0, 1, 2],
+        "Stonebrick" => [0, 1, 2, 3],
+        "Purpur_Block" => [0, 1, 2, 3, 6, 10],
+        "Stone" => [0, 1, 2, 3, 4, 5, 6],
+        "Terracotta" => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    ];
+
     public function __construct() {
+        $server = Server::getInstance();
+        $this->plugin = $server->getPluginManager()->getPlugin("mcMMO");
         $this->setDefaults();
     }
 
-    public function set(Block $block, int $xpreward = 0, int $skillreq = 0, ?array $drops = null) : void {
-        $this->values[BlockFactory::toStaticRuntimeId($block->getId(), $block->getDamage())] = [
-            MiningConfig::TYPE_XPREWARD => $xpreward,
-            MiningConfig::TYPE_SKILLREQ => $skillreq,
-            MiningConfig::TYPE_DROPS => $this->createDropsConfig($drops)
-        ];
+    private function set(Block $block, int $xpreward = 0, int $skillreq = 0, ?array $drops = null) : void {
+        $this->values[BlockFactory::toStaticRuntimeId($block->getId(), $block->getDamage())] = $xpreward;
     }
 
-    public function copy(Block $block, Block ...$blocks) : void {
-        $copy_index = BlockFactory::toStaticRuntimeId($block->getId(), $block->getDamage());
-        foreach($blocks as $block) {
-            $block_index = BlockFactory::toStaticRuntimeId($block->getId(), $block->getDamage());
-            $this->values[$block_index] = $this->values[$copy_index];
-        }
-    }
-
-    public function addDrops(array $drops, Block ...$blocks) : void {
-        $drops = $this->createDropsConfig($drops);
-        if($drops !== null) {
-            foreach($blocks as $block) {
-                if(!isset($this->values[$index = BlockFactory::toStaticRuntimeId($block->getId(), $block->getDamage())])) {
-                    throw new \InvalidArgumentException("Cannot modify block drops of an unconfigured block( " . get_class($block) . ")");
-                }
-                if(isset($this->values[$index][MiningConfig::TYPE_DROPS])) {
-                    $this->values[$index][MiningConfig::TYPE_DROPS] = array_unique(array_merge($this->values[$index][MiningConfig::TYPE_DROPS], $drops), SORT_REGULAR);
-                } else {
-                    $this->values[$index][MiningConfig::TYPE_DROPS] = $drops;
-                }
-            }
-        }
-    }
-
-    private function createDropsConfig(?array $drops) : ?array {
-        if(empty($drops)) {
-            return null;
-        }
-
-        $result = [];
-
-        foreach($drops as [
-            MiningConfig::TYPE_SKILLREQ => $skillreq,
-            MiningConfig::TYPE_XPREWARD => $xpreward,
-            MiningConfig::TYPE_CHANCE => $chance,
-            MiningConfig::TYPE_DROPS => $drops
-        ]){
-            $result[$skillreq][] = [
-                MiningConfig::TYPE_XPREWARD => $xpreward,
-                MiningConfig::TYPE_CHANCE => (int) $chance * 100,
-                MiningConfig::TYPE_DROPS => $drops
-            ];
-        }
-
-        return array_unique($result, SORT_REGULAR);
-    }
-
-    private function isRightTool(Item $item) : bool {
+    public function isRightTool(Item $item) : bool {
         return $item instanceof Pickaxe;
     }
 
-    public function getDrops(Player $player, Item $item, Block $block, int $skill_level, bool $has_ability, &$xpreward = null) : array{
+    public function isValidBlock(Block $block) : bool {
+         $this->values[BlockFactory::toStaticRuntimeId($block->getId(), $block->getDamage())];
+    }
+
+    public function getDrops(Player $player, Item $item, Block $block, int $skill_level, bool $has_ability, &$xpreward = null) : array {
         $xpreward = 0;
+        $drops = $block->getDrops($item);
         $multiplier = $has_ability ? 3 : 1;
         if($this->isRightTool($item) && isset($this->values[$index = BlockFactory::toStaticRuntimeId($block->getId(), $block->getDamage())])) {
-            $values = $this->values[$index];
-            if($skill_level >= $values[MiningConfig::TYPE_SKILLREQ]) {
-                $xpreward = $values[MiningConfig::TYPE_XPREWARD] * $multiplier;
-            }
-
-            if(isset($values[MiningConfig::TYPE_DROPS])) {
-                foreach($values[MiningConfig::TYPE_DROPS] as $skillreq => $drops) {
-                    if($skill_level >= $skillreq){
-                        foreach($drops as [
-                            MiningConfig::TYPE_XPREWARD => $xprew,
-                            MingingConfig::TYPE_CHANCE => $chance,
-                            MiningConfig::TYPE_DROPS => $drops
-                        ]) {
-                            $chance *= $multiplier;
-                            if(mt_rand($chance, 10000) <= $chance){
-                                $xpreward = $xprew * $multiplier;
-                                return $drops;
-                            }
-                        }
-                    }
+            $xpreward = $this->values[$index] * $multiplier;
+            $chance = $skill_level * MOD * $multiplier;
+            if(mt_rand(1, 100) <= $chance) {
+                foreach($drops as $drop) {
+                    $drop->setCount(3);
                 }
             }
         }
-        return [];
+        return $drops;
     }
 
-    private function setDefaults() : void {
-        $this->set(Block::get(Block::COBBLESTONE), 40);
-        $this->copy(Block::get(Block::COBBLESTONE),
-            Block::get(Block::STONE), Block::get(Block::COAL_ORE), Block::get(Block::IRON_ORE),
-            Block::get(Block::GOLD_ORE), Block::get(Block::REDSTONE_ORE),Block::get(Block::LAPIS_ORE),
-            Block::get(Block::DIAMOND_ORE), Block::get(Block::OBSIDIAN));
+    private function setDefaults() {
 
+        /** 
+         * Because of the way Bedrock handles blocks like Red_Sand as Block Sand
+         * with a meta data value > 0. As a result XP and extra drops will be linked.
+         * Best solution to keep code clean and concise. Advice???
+         */
+
+        // Sets block xp rewards
+        $config = new Config($this->plugin->getDataFolder() . "xpreward.yml", Config::YAML);
+        $blocks = $config->get("Mining", []); 
+        foreach($blocks as $key => $block) {
+            $states = $this->metablocks[$key] ?? array(0);
+            foreach($states as $state) {
+                $id = constant("pocketmine\block\Block::" . strtoupper($key));
+                $this->set(Block::get($id, $state), $block);
+            }
+        }
     }
 }

@@ -45,16 +45,16 @@ class ExcavationListener extends SkillListener{
      */
     public function onBlockBreak(BlockBreakEvent $event) : void {
         $block = $event->getBlock();
-        $player = $event->getPlayer();
-        $manager = $this->plugin->getSkillManager($player);
-        $skill = $manager->getSkill(self::EXCAVATION);
-        $drops = $this->config->getDrops($player, $event->getItem(), $event->getBlock(), $skill->getLevel(), $skill->hasAbility(), $xpreward);
-        if(!empty($drops)) {
+        if($this->config->isValidBlock($block)) {
+            $player = $event->getPlayer();
+            $manager = $this->plugin->getSkillManager($player);
+            $skill = $manager->getSkill(self::EXCAVATION);
+            $drops = $this->config->getDrops($player, $event->getItem(), $event->getBlock(), $skill->getLevel(), $skill->hasAbility(), $xpreward);
             $event->setDrops($drops);
-        }
 
-        if(!is_null($xpreward) && $xpreward > 0) {
-            $manager->addSkillXp(self::EXCAVATION, $xpreward);
+            if(!is_null($xpreward) && $xpreward > 0) {
+                $manager->addSkillXp(self::EXCAVATION, $xpreward);
+            }
         }
     }
 }

@@ -18,11 +18,6 @@ Excavation:
   Soul_Sand: 40
 Mining:
   Magma: 30
-  Tube_Coral: 75
-  Brain_Coral: 80
-  Bubble_Coral: 70
-  Fire_Coral: 90
-  Horn_Coral: 125
   Coal_Ore: 400
   Diamond_Ore: 2400
   Emerald_Ore: 1000
@@ -42,37 +37,11 @@ Mining:
   Nether_Quartz_Ore: 300
   Redstone_Ore: 600
   Sandstone: 30
-  Black_Terracotta: 50
-  Blue_Terracotta: 50
-  Brown_Terracotta: 50
-  Cyan_Terracotta: 50
-  Gray_Terracotta: 50
-  Green_Terracotta: 50
-  Light_Blue_Terracotta: 50
-  Light_Gray_Terracotta: 50
-  Lime_Terracotta: 50
-  Magenta_Terracotta: 50
-  Orange_Terracotta: 50
-  Pink_Terracotta: 50
-  Purple_Terracotta: 50
-  Red_Terracotta: 50
-  White_Terracotta: 50
-  Yellow_Terracotta: 50
   Stone: 15
-  Granite: 15
-  Andesite: 15
-  Diorite: 15
-  Stone_Bricks: 50
-  Cracked_Stone_Bricks: 50
-  Mossy_Stone_Bricks: 50
-  Chiseled_Stone_Bricks: 50
+  Stonebrick: 50
   Red_Sandstone: 100
   Prismarine: 70
-  Prismarine_Bricks: 70
-  Dark_Prismarine: 70
   Sea_Lantern: 70
   Purpur_Block: 200
-  Purpur_Pillar: 250
-  Purpur_Slab: 150
   Purpur_Stairs: 250
 ...

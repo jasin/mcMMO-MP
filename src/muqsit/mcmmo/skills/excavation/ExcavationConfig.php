@@ -14,11 +14,12 @@ use pocketmine\Server;
 
 class ExcavationConfig{
 
-    const TYPE_XPREWARD = 0;
-    const TYPE_SKILLREQ = 1;
-    const TYPE_CHANCE = 2;
-    const TYPE_DROPS = 3;
-    const TYPE_XP = 4;
+    const TYPE_XP = 0;
+    const TYPE_DROPS = 1;
+    const TYPE_XPREWARD = 2;
+    const TYPE_SKILLREQ = 3;
+    const TYPE_CHANCE = 4;
+    const TYPE_DROP = 5;
 	
     /** @var array[] */
     private $values = [];
@@ -44,7 +45,6 @@ class ExcavationConfig{
 
 
     private function addDrops(array $drops, array $blocks) : void{
-        $drops = $this->createDropsConfig($drops);
         if($drops !== null){
             foreach($blocks as $block){
                 if(!isset($this->values[$index = BlockFactory::toStaticRuntimeId($block->getId(), $block->getDamage())])){
@@ -60,29 +60,6 @@ class ExcavationConfig{
         }
     }
 
-    private function createDropsConfig(?array $drops) : ?array{
-        if(empty($drops)){
-            return null;
-        }
-
-        $result = [];
-
-        foreach($drops as [
-            ExcavationConfig::TYPE_SKILLREQ => $skillreq,
-            ExcavationConfig::TYPE_XPREWARD => $xpreward,
-            ExcavationConfig::TYPE_CHANCE => $chance,
-            ExcavationConfig::TYPE_DROPS => $drops
-        ]){
-            $result[] = [
-                ExcavationConfig::TYPE_SKILLREQ => $skillreq,
-                ExcavationConfig::TYPE_XPREWARD => $xpreward,
-                ExcavationConfig::TYPE_CHANCE => $chance,
-                ExcavationConfig::TYPE_DROPS => $drops
-            ];
-        }
-        return array_unique($result, SORT_REGULAR);
-    }
-
     public function isRightTool(Item $item) : bool{
         return $item instanceof Shovel;
     }
@@ -93,9 +70,12 @@ class ExcavationConfig{
 
     public function getDrops(Player $player, Item $item, Block $block, int $skill_level, bool $has_ability, &$xpreward = null) : array{
         $xpreward = 0;
+        $drops = $block->getDrops($item);
         $multiplier = $has_ability ? 3 : 1;
 
         if($this->isRightTool($item) && isset($this->values[$index = BlockFactory::toStaticRuntimeId($block->getId(), $block->getDamage())])) {
+            $drops = $block->getDrops($item);
+            var_dump($drops);
             $values = $this->values[$index];
             $xpreward = $values[ExcavationConfig::TYPE_XP] * $multiplier;
             if(isset($values[ExcavationConfig::TYPE_DROPS])) {
@@ -103,20 +83,20 @@ class ExcavationConfig{
                     ExcavationConfig::TYPE_SKILLREQ => $skillreq,
                     ExcavationConfig::TYPE_CHANCE => $chance,
                     ExcavationConfig::TYPE_XPREWARD => $drop_xp,
-                    ExcavationConfig::TYPE_DROPS => $drop
+                    ExcavationConfig::TYPE_DROP => $drop
                 ]) {
                     if($skill_level >= $skillreq) {
                         $chance *= $multiplier;
-                        if(mt_rand(1, 100) <= $chance) {
+                        if(mt_rand(1, 10000) <= $chance * 100) {
                             $drop_xp *= $multiplier;
-                            $drop_xp += $xpreward;
-                            return $drop;
+                            $xpreward += $drop_xp;
+                            $drops[] = $drop;
                         }
                     }
                 }
             }
         }
-        return [];
+        return $drops;
     }
 
     private function setDefaults() : void {
@@ -128,8 +108,8 @@ class ExcavationConfig{
          */
 
         // Sets block xp rewards
-        $excavation = new Config($this->plugin->getDataFolder() . "xpreward.yml", Config::YAML);
-        $blocks = $excavation->get("Excavation", []); 
+        $config = new Config($this->plugin->getDataFolder() . "xpreward.yml", Config::YAML);
+        $blocks = $config->get("Excavation", []); 
         foreach($blocks as $key => $block) {
             $states = $this->metablocks[$key] ?? array(0);
             foreach($states as $state) {
@@ -139,8 +119,8 @@ class ExcavationConfig{
         }
 
         // Add extra drops
-        $excavation = new Config($this->plugin->getDataFolder() . "drops.yml", Config::YAML);
-        $drops = $excavation->get("Excavation", []);
+        $config_drops = new Config($this->plugin->getDataFolder() . "drops.yml", Config::YAML);
+        $drops = $config_drops->get("Excavation", []);
         foreach($drops as $drop => $data) {
             $blocks = [];
             foreach($data["From"] as $block) {
@@ -154,8 +134,8 @@ class ExcavationConfig{
                 [
                     ExcavationConfig::TYPE_SKILLREQ => $data["Level"],
                     ExcavationConfig::TYPE_XPREWARD => $data["XP"],
-                    ExcavationConfig::TYPE_CHANCE => $data["Chance"],
-                    ExcavationConfig::TYPE_DROPS => [Item::get(constant("pocketmine\item\Item::$drop"))]
+                    ExcavationConfig::TYPE_CHANCE => (int)($data["Chance"] * 100),
+                    ExcavationConfig::TYPE_DROP => Item::get(constant("pocketmine\item\Item::$drop"))
                 ]
             ],
                 $blocks
