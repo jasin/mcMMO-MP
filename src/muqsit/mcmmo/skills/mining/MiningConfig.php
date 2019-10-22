@@ -11,12 +11,13 @@ use pocketmine\utils\Config;
 
 class MiningConfig {
 
-    const MOD = 0.01;
+    /** @var float */
+    private $modifier = 0.01;
 
     /** @var Plugin */
     private $plugin;
 
-    /** @var array */
+    /** @var values[] */
     private $values = [];
 
     /** @var array */
@@ -43,7 +44,7 @@ class MiningConfig {
     }
 
     public function isValidBlock(Block $block) : bool {
-         $this->values[BlockFactory::toStaticRuntimeId($block->getId(), $block->getDamage())];
+         return isset($this->values[BlockFactory::toStaticRuntimeId($block->getId(), $block->getDamage())]);
     }
 
     public function getDrops(Player $player, Item $item, Block $block, int $skill_level, bool $has_ability, &$xpreward = null) : array {
@@ -52,7 +53,7 @@ class MiningConfig {
         $multiplier = $has_ability ? 3 : 1;
         if($this->isRightTool($item) && isset($this->values[$index = BlockFactory::toStaticRuntimeId($block->getId(), $block->getDamage())])) {
             $xpreward = $this->values[$index] * $multiplier;
-            $chance = $skill_level * MOD * $multiplier;
+            $chance = $skill_level * $this->modifier * $multiplier;
             if(mt_rand(1, 100) <= $chance) {
                 foreach($drops as $drop) {
                     $drop->setCount(3);

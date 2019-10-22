@@ -51,9 +51,9 @@ class EventListener implements Listener{
                     if(!isset($this->last_interactions[$pid]) || $this->last_interactions[$pid] !== $player->ticksLived){
                         $this->last_interactions[$pid] = $player->ticksLived;
                         $skill_manager = $this->plugin->getSkillManager($player);
-                        if($skill_manager->canUseAbilities()){
+                        if($skill_manager->canUseAbilities()) {
                             $skill = $skill_manager->getSkillByItem($item);
-                            if($skill !== null){
+                            if($skill !== null) {
                                 $player->sendMessage($skill_manager->activateAbility($skill->getId()) ? TextFormat::GREEN . "**" . strtoupper($skill->getAbilityName()) . TextFormat::GREEN . " ACTIVATED**" :
                                     TextFormat::RED . "You are too tired to use that ability again. " . TextFormat::YELLOW . "(" . $skill->getAbilityCooldownExpire() . "s)"
                                 );

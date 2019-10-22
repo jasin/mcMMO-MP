@@ -75,7 +75,6 @@ class ExcavationConfig{
 
         if($this->isRightTool($item) && isset($this->values[$index = BlockFactory::toStaticRuntimeId($block->getId(), $block->getDamage())])) {
             $drops = $block->getDrops($item);
-            var_dump($drops);
             $values = $this->values[$index];
             $xpreward = $values[ExcavationConfig::TYPE_XP] * $multiplier;
             if(isset($values[ExcavationConfig::TYPE_DROPS])) {

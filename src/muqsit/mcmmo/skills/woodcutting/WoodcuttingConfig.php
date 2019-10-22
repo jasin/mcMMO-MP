@@ -58,9 +58,8 @@ class WoodcuttingConfig{
         return $item instanceof Axe;
     }
 
-    public function isLog(Block $block) : bool {
-        $blockId = $block->getId();
-        return ($block instanceof Wood && $blockId === Block::LOG) || ($block instanceof Wood2 && $blockId === Block::LOG2);
+    public function isValidBlock(Block $block) : bool {
+        return isset($this->values[BlockFactory::toStaticRuntimeId($block->getId(), $block->getDamage())]);
     }
 
     public function isLeaf(Block $block) : bool{

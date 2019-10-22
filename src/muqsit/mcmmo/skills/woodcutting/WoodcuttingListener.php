@@ -38,7 +38,7 @@ class WoodcuttingListener extends SkillListener{
                 }
             }
 
-            if($this->config->isLog($block) && $skill->hasAbility()) {
+            if($this->config->isValidBlock($block) && $skill->hasAbility()) {
                 $level = $block->getLevel();
                 $level->useBreakOn($block, $item, $player);
                 $level->addSound(new PopSound($block));
@@ -52,15 +52,17 @@ class WoodcuttingListener extends SkillListener{
      * @ignoreCancelled true
      */
     public function onBlockBreak(BlockBreakEvent $event) : void {
-        $player = $event->getPlayer();
-        $skill = $this->plugin->getSkillManager($player)->getSkill(self::WOODCUTTING);
-        $drops = $this->config->getDrops($player, $event->getItem(), $event->getBlock(), $skill->getLevel(), $skill->hasAbility(), $xpreward);
-        if(!empty($drops)) {
+        $block = $event->getBlock();
+        if($this->config->isValidBlock($block)) {
+            $player = $event->getPlayer();
+            $manager = $this->plugin->getSkillManager($player);
+            $skill = $manager->getSkill(self::WOODCUTTING);
+            $drops = $this->config->getDrops($player, $event->getItem(), $event->getBlock(), $skill->getLevel(), $skill->hasAbility(), $xpreward);
             $event->setDrops($drops);
-        }
 
-        if(!is_null($xpreward) && $xpreward > 0) {
-            $this->plugin->getSkillManager($player)->addSkillXp(self::WOODCUTTING, $xpreward);
+            if(!is_null($xpreward) && $xpreward > 0) {
+                $this->plugin->getSkillManager($player)->addSkillXp(self::WOODCUTTING, $xpreward);
+            }
         }
     }
 }

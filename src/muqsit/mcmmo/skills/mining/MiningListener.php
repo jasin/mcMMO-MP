@@ -6,6 +6,7 @@ use muqsit\mcmmo\skills\SkillListener;
 use pocketmine\block\Block;
 use pocketmine\event\block\BlockBreakEvent;
 use pocketmine\event\player\PlayerInteractEvent;
+use pocketmine\level\sound\PopSound;
 
 class MiningListener extends SkillListener {
 
@@ -46,7 +47,8 @@ class MiningListener extends SkillListener {
         $block = $event->getBlock();
         if($this->config->isValidBlock($block)) {
             $player = $event->getPlayer();
-            $skill = $this->plugin->getSkillManager($player)->getSkill(self::MINING);
+            $manager = $this->plugin->getSkillManager($player);
+            $skill = $manager->getSkill(self::MINING);
             $drops = $this->config->getDrops($player, $event->getItem(), $event->getBlock(), $skill->getLevel(), $skill->hasAbility(), $xpreward);
 
             $event->setDrops($drops);
