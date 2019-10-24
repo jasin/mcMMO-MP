@@ -53,11 +53,12 @@ class WoodcuttingListener extends SkillListener{
      */
     public function onBlockBreak(BlockBreakEvent $event) : void {
         $block = $event->getBlock();
-        if($this->config->isValidBlock($block)) {
+        $item = $event->getItem();
+        if($this->config->isValidBlock($block) && $this->config->isRightTool($item)) {
             $player = $event->getPlayer();
             $manager = $this->plugin->getSkillManager($player);
             $skill = $manager->getSkill(self::WOODCUTTING);
-            $drops = $this->config->getDrops($player, $event->getItem(), $event->getBlock(), $skill->getLevel(), $skill->hasAbility(), $xpreward);
+            $drops = $this->config->getDrops($player, $item, $block, $skill->getLevel(), $skill->hasAbility(), $xpreward);
             $event->setDrops($drops);
 
             if(!is_null($xpreward) && $xpreward > 0) {

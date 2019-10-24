@@ -2,6 +2,7 @@
 namespace muqsit\mcmmo\skills;
 
 use muqsit\mcmmo\skills\mining\MiningSkill;
+use muqsit\mcmmo\skills\mining\BlastMiningSkill;
 use muqsit\mcmmo\skills\acrobatics\AcrobaticsSkill;
 use muqsit\mcmmo\skills\excavation\ExcavationSkill;
 use muqsit\mcmmo\skills\tasks\AbilityCooldownNotifyTask;
@@ -13,6 +14,7 @@ use pocketmine\item\Item;
 use pocketmine\Player;
 use pocketmine\Server;
 use pocketmine\utils\TextFormat;
+use pocketmine\math\Vector3;
 
 class SkillManager {
 
@@ -45,6 +47,9 @@ class SkillManager {
 
     /** @var bool */
     private $can_use_abilities;
+
+    /** @var Vector3 */
+    private $last_drop;
 
     public function __construct(Player $player, array $savedata) {
         $this->server = Server::getInstance();
@@ -104,6 +109,7 @@ class SkillManager {
         SkillManager::registerSkill(WoodcuttingSkill::class);
         SkillManager::registerSkill(AcrobaticsSkill::class);
         SkillManager::registerSkill(MiningSkill::class);
+        SkillManager::registerSkill(BlastMiningSkill::class);
     }
 
     public static function addSkillIdentifiers(int $skillId, int ...$itemIds) : void{
@@ -158,6 +164,14 @@ class SkillManager {
         }
 
         return $this->skill_tree;
+    }
+
+    public function getLastDrop() : Vector3 {
+        return $this->last_drop;
+    }
+
+    public function setLastDrop(Vector3 $vector) : void {
+        $this->last_drop = $vector;
     }
 
     public function toSaveData() : array{

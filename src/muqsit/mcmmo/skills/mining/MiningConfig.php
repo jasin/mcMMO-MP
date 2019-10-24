@@ -3,8 +3,10 @@ namespace muqsit\mcmmo\skills\mining;
 
 use pocketmine\block\Block;
 use pocketmine\block\BlockFactory;
+use pocketmine\block\TNT;
 use pocketmine\item\Item;
 use pocketmine\item\Pickaxe;
+use pocketmine\item\FlintSteel;
 use pocketmine\Player;
 use pocketmine\Server;
 use pocketmine\utils\Config;
@@ -19,6 +21,9 @@ class MiningConfig {
 
     /** @var values[] */
     private $values = [];
+
+    /** @var Vector3 */
+    public $last_tnt_drop;
 
     /** @var array */
     private $metaBlocks = [
@@ -38,6 +43,14 @@ class MiningConfig {
     private function set(Block $block, int $xpreward = 0, int $skillreq = 0, ?array $drops = null) : void {
         $this->values[BlockFactory::toStaticRuntimeId($block->getId(), $block->getDamage())] = $xpreward;
     }
+
+    public function isTNT(Block $block) : bool {
+        return $block instanceof TNT;
+    }
+
+    public function isFlintSteel(Item $item) :bool {
+        return $item instanceof FlintSteel;
+    } 
 
     public function isRightTool(Item $item) : bool {
         return $item instanceof Pickaxe;

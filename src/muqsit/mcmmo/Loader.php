@@ -5,10 +5,12 @@ use muqsit\mcmmo\commands\McMMOCommand;
 use muqsit\mcmmo\commands\SkillCommand;
 use muqsit\mcmmo\database\Database;
 use muqsit\mcmmo\skills\SkillManager;
+use muqsit\mcmmo\block\TNT;
 
 use pocketmine\Player;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\Config;
+use pocketmine\block\BlockFactory;
 
 class Loader extends PluginBase{
 
@@ -17,6 +19,10 @@ class Loader extends PluginBase{
 
     /** @var Database */
     private $database;
+
+    public function onLoad() : void {
+        BlockFactory::registerBlock(new TNT, true);
+    }
 
     public function onEnable() : void{
 
