@@ -20,6 +20,9 @@ class Loader extends PluginBase{
     /** @var Database */
     private $database;
 
+    /** @var Player[] */
+    private $onlinePlayers = [];
+
     public function onLoad() : void {
         BlockFactory::registerBlock(new TNT, true);
     }
@@ -31,7 +34,6 @@ class Loader extends PluginBase{
         $this->saveResource("database.yml");
         $this->saveResource("xpreward.yml");
         $this->saveResource("drops.yml");
-        $this->saveResource("req_block_states.yml");
         $this->saveResource("help.ini");
 
         McMMOCommand::registerDefaults($this);
@@ -45,9 +47,23 @@ class Loader extends PluginBase{
         $this->database = Database::getFromString($dbtype, $this->getDataFolder() . $args["datafolder"] . DIRECTORY_SEPARATOR);
 
         $this->getServer()->getPluginManager()->registerEvents(new EventListener($this), $this);
+
+        /**
+         * During a server /reload, online players
+         * are unloaded but never re-loaded because 
+         * the onPlayerLogin event is never called.
+         * Reload online players to avoid a server crash.
+         */
+
+        $onlinePlayers = $this->getServer()->getOnlinePlayers();
+        if(!is_null($onlinePlayers)) {
+            foreach($onlinePlayers as $player) {
+                $this->getDatabase()->load($player);
+            }
+        }
     }
 
-    public function onDisable() : void{
+    public function onDisable() : void {
         $this->getDatabase()->saveAll();
         $this->getDatabase()->onClose();
     }
