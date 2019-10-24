@@ -1,8 +1,8 @@
 name: mcMMO
-main: muqsit\mcmmo\Loader
+main: jasin\mcmmo\Loader
 api: 3.0.0
 version: 1.0
-author: Muqsit
+author: Jasin
 
 permissions:
   mcmmo.commands.modifs:
